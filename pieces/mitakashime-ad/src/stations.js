@@ -14,7 +14,7 @@ function greenPill(str, x, y, t0, o = {}) {   // right-aligned at x
   ctx.translate(x - w / 2, y); ctx.scale(lerp(0.6, 1, e), lerp(0.6, 1, e)); ctx.globalAlpha *= clamp((TT - t0) / 0.12);
   ctx.beginPath(); ctx.roundRect(-w / 2, -h / 2, w, h, h / 2); ctx.fillStyle = rgba(MK.green, 0.14); ctx.fill(); ctx.strokeStyle = rgba(MK.green, 0.7); ctx.lineWidth = 1.5 * UNIT; ctx.stroke();
   ctx.fillStyle = MK.green; ctx.beginPath(); ctx.arc(-w / 2 + 20 * UNIT, 0, 5 * UNIT, 0, TAU); ctx.fill();
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(str, 8 * UNIT, 1); ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (!MK_MUTE) ctx.fillText(str, 8 * UNIT, 1); ctx.restore();
 }
 function check(x, y, t0, r = 18) {   // a green check in a ring, popping in
   if (TT < t0) return; const e = springEase(TT - t0, SPRING.playful.k, SPRING.playful.d);
@@ -115,15 +115,16 @@ SCENE.system = () => {
   }
   for (let i = Math.max(0, k - 1); i <= Math.min(4, k + 1); i++) {
     const a = i === 0 ? clamp(ev(10.15, 0.3)) : 1; if (a <= 0) continue;
+    const [x, y, w, h] = cardBox(i), sx0 = x - camX + MIDX - 20 * UNIT, sx1 = x + w - camX + MIDX + 20 * UNIT;
+    MK_MUTE = sx0 < 0 || sx1 > W;   // a card's text shows only once the whole card is in frame
     ctx.save(); ctx.globalAlpha = a;
     STATION_DRAW[STATIONS[i].key](i, CUE.stations[i]);
-    const [x, y, w, h] = cardBox(i);
     mkSelect(x - 18 * UNIT, y - 18 * UNIT, w + 36 * UNIT, h + 36 * UNIT, { frac: 1, alpha: 0.75 * (1 - 0.6 * clamp(ev(CUE.stations[i] + 0.45, 0.4))), label: STATIONS[i].label });
-    ctx.restore();
+    ctx.restore(); MK_MUTE = false;
   }
   // the hero: the customer's bubble shrinks into the first node, then rides the line as a small bubble
   if (TT < 10.4) mkBubble(camX, ROW.line - 70 * UNIT * (1 - seg(TT, 10.0, 10.4)), MSG, { size: 40, s: 1 - EZ.i3(seg(TT, 10.0, 10.4)) * 0.95 });
   else mkBubble(camX, ROW.line - 58 * UNIT, '• • •', { size: 26, s: springEase(TT - 10.4, SPRING.playful.k, SPRING.playful.d) });
   if (TT >= t0 - 0.3) mkHeadline(STATIONS[k].head, MIDX, ROW.head, { t0: t0 - 0.2, size: 76, green: true });
 };
-const pieceCamX = (t) => springTrack([[0, stX(0)], ...CUE.stations.slice(1).map((c, i) => [c - 0.35, stX(i + 1)])], SPRING.smooth);
+const pieceCamX = (t) => springTrack([[0, stX(0)], ...CUE.stations.slice(1).map((c, i) => [c - 0.3, stX(i + 1)])], { k: 520, d: 46 });   // a quick, settled whip-pan

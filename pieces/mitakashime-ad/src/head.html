@@ -62,7 +62,7 @@ const SHOTS = SHOT_LIST.map(([t0, sc], i) => [sc + (i ? '-' + i : ''), i, t0, ER
 const CUE = {
   ping: 0.5, night: 1.5, pile: [3.0, 3.5, 4.0], drift: 4.75, moved: 5.0, quiet: 6.0, hit: 7.0, shrink: 7.5,
   plan: 8.0, learn: 8.5, built: 10.0, stations: [10.5, 11.5, 12.5, 13.5, 14.5], rush: 15.5, hold: 17.5,
-  payoff: 19.0, reply: 22.5, end: 24.0,
+  payoff: 19.0, reply: 22.5, end: 24.0, rush: [15.5, 16.0, 16.5, 17.0],
 };
 const TIMELINE = {
   width: W, height: H, fps: FPS, bpm: BPM, gridOffset: GRID0, duration: DURATION, frames: NFRAMES, loop: LOOP_T, safe: SAFE, aspect: FORMAT,
@@ -72,7 +72,7 @@ const TIMELINE = {
   morphs: [],
   rush: [15.5, 16.0, 16.5, 17.0],
   cues: CUE,
-  anchor: { t0: 15.5, t1: 17.5 },
+  anchor: { t0: 15.5, t1: 17.5, x: MIDX, y: ROW.line - 58, tolerance: 40 },
   acts: [
     { name: '1 The night', role: 'build',   t0: 0.0,  t1: 6.5 },
     { name: '2 The turn',  role: 'build',   t0: 6.5,  t1: 8.0 },

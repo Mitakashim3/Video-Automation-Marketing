@@ -67,7 +67,7 @@ SCENE.loss = () => {
 SCENE.turn = () => {
   const on = past(TT, CUE.hit);
   mkStage({ c: MK.green, a: on ? lerp(0.0, 0.26, springEase(TT - CUE.hit, 120, 16)) : 0, cy: H * 1.16, rx: W * 0.85, sq: 0.5, wash: 0.9 });
-  if (!on) return;
+  if (!on) { mkStage({ c: MK.muted, a: 0.07 * clamp(ev(6.5, 0.4)), cy: H * 1.16, rx: W * 0.85, sq: 0.5, wash: 0.5 }); return; }
   const e = springEase(TT - CUE.hit, SPRING.heavy.k, SPRING.heavy.d), sh = EZ.i3(seg(TT, CUE.shrink + 0.15, 8.0));
   const h = 330 * UNIT * lerp(0.82, 1, e) * (1 - sh * 0.97);
   mkMark(MIDX, MIDY - 10 * UNIT, h, { rot: lerp(1.0, -0.5, e) + 0.06 * Math.sin(TT * 1.3), depth: 30 });
@@ -111,7 +111,7 @@ function stationBook(k, t0) {
     ctx.save(); ctx.translate(tx + (cw - 10 * UNIT) / 2, yy + (ch - 10 * UNIT) / 2); ctx.scale(sc, sc);
     ctx.shadowColor = rgba(MK.green, 0.35); ctx.shadowBlur = 24 * UNIT;
     ctx.beginPath(); ctx.roundRect(-(cw - 10 * UNIT) / 2, -(ch - 10 * UNIT) / 2, cw - 10 * UNIT, ch - 10 * UNIT, 10 * UNIT); ctx.fillStyle = MK.green; ctx.fill();
-    ctx.shadowColor = 'transparent'; ctx.font = `700 ${20 * UNIT}px ${SANS}`; ctx.fillStyle = MK.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Booked', 0, 1);
+    ctx.shadowColor = 'transparent'; ctx.font = `700 ${20 * UNIT}px ${SANS}`; ctx.fillStyle = MK.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (!MK_MUTE) ctx.fillText('Booked', 0, 1);
     ctx.restore();
   }
 }

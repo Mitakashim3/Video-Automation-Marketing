@@ -12,6 +12,7 @@ const MK = {
 };
 const SANS = 'Inter, "Inter Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 const SERIF = '"Instrument Serif", "Iowan Old Style", Georgia, "Times New Roman", serif';
+let MK_MUTE = false;   // true: draw shapes but no text (cards sliding in or out of frame during a pan)
 const rgba = (hex, a) => { const v = parseInt(hex.slice(1), 16); return `rgba(${v >> 16},${(v >> 8) & 255},${v & 255},${a})`; };
 
 // ---------------------------------------------------------------------
@@ -123,11 +124,13 @@ function mkCursor(x, y, s = 1) {
 }
 // small caps label (grey by default)
 function mkLabel(str, x, y, o = {}) {
+  if (MK_MUTE) return;
   ctx.save(); ctx.globalAlpha *= o.alpha ?? 1; ctx.font = `${o.weight ?? 600} ${(o.size ?? 22) * UNIT}px ${SANS}`;
   ctx.letterSpacing = `${(o.track ?? 0.12) * (o.size ?? 22) * UNIT}px`; ctx.fillStyle = o.c || MK.muted; ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'alphabetic';
   ctx.fillText(o.upper === false ? str : str.toUpperCase(), x, y); ctx.restore();
 }
 function mkText(str, x, y, size, o = {}) {
+  if (MK_MUTE) return 0;
   ctx.save(); ctx.globalAlpha *= o.alpha ?? 1; ctx.font = `${o.italic ? 'italic ' : ''}${o.weight ?? (o.serif ? 400 : 600)} ${size * UNIT}px ${o.serif ? SERIF : SANS}`;
   ctx.letterSpacing = `${(o.track ?? (o.serif ? 0 : -0.02)) * size * UNIT}px`;
   ctx.fillStyle = o.c || MK.text; ctx.textAlign = o.align || 'left'; ctx.textBaseline = o.base || 'alphabetic';
@@ -195,8 +198,8 @@ function mkBubble(x, y, text, o = {}) {
   ctx.quadraticCurveTo(tx + d * 12 * UNIT, h / 2 + 4 * UNIT, tx + d * 16 * UNIT, h / 2 - 6 * UNIT);
   ctx.fillStyle = dim > 0 && !reply ? mixHex(MK.text, MK.muted, dim) : fill; ctx.fill(); ctx.shadowColor = 'transparent';
   ctx.font = `500 ${size * UNIT}px ${SANS}`; ctx.letterSpacing = `${-0.01 * size * UNIT}px`; ctx.fillStyle = MK.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(text, 0, size * 0.04 * UNIT);
-  if (o.meta) { ctx.font = `500 ${size * 0.55 * UNIT}px ${SANS}`; ctx.letterSpacing = '0px'; ctx.fillStyle = reply ? MK.green : MK.muted; ctx.textAlign = reply ? 'right' : 'left';
+  if (!MK_MUTE) ctx.fillText(text, 0, size * 0.04 * UNIT);
+  if (o.meta && !MK_MUTE) { ctx.font = `500 ${size * 0.55 * UNIT}px ${SANS}`; ctx.letterSpacing = '0px'; ctx.fillStyle = reply ? MK.green : MK.muted; ctx.textAlign = reply ? 'right' : 'left';
     ctx.fillText(o.meta, reply ? w / 2 : -w / 2, h / 2 + size * 1.0 * UNIT); }
   ctx.restore();
   if (!o.noAnchor) SPARK_AT = toScreen(x, y);

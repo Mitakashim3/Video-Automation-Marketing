@@ -5,3 +5,5 @@ pieces/*/review/
 pieces/*/index.html
 *.wav
 node_modules/
+pieces/*/frames*/
+pieces/*/review*/
