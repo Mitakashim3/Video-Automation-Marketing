@@ -1,0 +1,31 @@
+{
+  "name": "mitakashime-ad",
+  "title": "Mitakashime \u2014 Done Your Way",
+  "format": {
+    "width": 1080,
+    "height": 1080,
+    "fps": 24,
+    "bpm": 120,
+    "duration": 26.0,
+    "frames": 624
+  },
+  "formats": [
+    "1:1",
+    "9:16"
+  ],
+  "storyFormat": "F4 mission (goal + helper, cut on the beat)",
+  "style": "mitakashime",
+  "review": {
+    "safe": {
+      "top": 60,
+      "bottom": 110,
+      "right": 60
+    },
+    "refs": {}
+  },
+  "scenes": [
+    "src/scenes.js",
+    "src/stations.js",
+    "src/finale.js"
+  ]
+}

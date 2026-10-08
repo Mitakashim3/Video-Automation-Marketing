@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mitakashime — Done Your Way</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #040a07; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { max-width: 100vw; max-height: 100vh; width: auto; height: auto; display: block; cursor: pointer; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script>
+"use strict";
+// =====================================================================
+//  MITAKASHIME — "sketch it in grey, build it in green". 26.0s @ 120 BPM, 24fps, F4 mission.
+//  Main format 1:1 (Facebook feed), also 9:16 (Reels): ?format=9:16. Every layout comes from MIDX / MIDY / UNIT.
+//  Hero: the customer's message bubble. Green = answered / automated only.
+// =====================================================================
+const FORMATS = { '9:16': [1080, 1920], '4:5': [1080, 1350], '1:1': [1080, 1080], '16:9': [1920, 1080] };
+const FORMAT = new URLSearchParams(location.search).get('format') || '1:1';
+const FPS = 24, [W, H] = FORMATS[FORMAT];
+{ const cv = document.getElementById('c'); cv.width = W; cv.height = H; }
+const BPM = 120, GRID0 = 0, BEAT = 60 / BPM, E8 = BEAT / 2, E16 = BEAT / 4;
+const DURATION = 26.0;
+const NFRAMES = Math.round(DURATION * FPS);
+const LOOP_T = NFRAMES / FPS;
+const SAFE = { '9:16': { top: 240, bottom: 420, right: 140 }, '4:5': { top: 80, bottom: 160, right: 60 }, '1:1': { top: 60, bottom: 110, right: 60 }, '16:9': { top: 60, bottom: 110, right: 60 } }[FORMAT];
+const HAND = '"Instrument Serif", Georgia, serif';
+const CX = FORMAT === '9:16' ? (W - SAFE.right) / 2 : W / 2;
+// the content box: centre and the headline / subject rows for this format
+const MIDX = CX, MIDY = FORMAT === '9:16' ? (SAFE.top + H - SAFE.bottom) / 2 : H / 2;
+const ROW = FORMAT === '9:16'
+  ? { head: 470, sub: MIDY + 40, foot: 1390, line: 640 }       // 9:16: headline high, subject in the middle, safe of the UI
+  : { head: 196, sub: MIDY + 70, foot: H - 150, line: 330 };   // 1:1
+const onBeat = (t) => +(GRID0 + Math.round((t - GRID0) / E8) * E8).toFixed(4);
+
+// ---- the shot list: [t0, scene]. Every boundary is a hard cut on the 8th grid (BRIDGES = []).
+const SHOT_LIST = [
+  [0.0,  'cold'],     // 1  black, a ping, the bubble
+  [1.5,  'night'],    // 2  pull back: the dark shop
+  [2.5,  'clock'],    //    close: the clock sweeps
+  [3.0,  'night'],    //    wide: messages pile up, threads tangle
+  [4.5,  'loss'],     // 3  the bubble drifts away. "They moved on."
+  [6.5,  'turn'],     // 4  silence, then the mark on one hit
+  [8.0,  'plan'],     // 5  dashed grey: we learn your business
+  [10.0, 'system'],   // 6  the line goes green; five stations
+  [15.5, 'rush1'],    // 7  the rush: one skill per beat
+  [16.0, 'rush2'],
+  [16.5, 'rush3'],
+  [17.0, 'rush4'],
+  [17.5, 'hold'],     // 8  wide, still, silent
+  [19.0, 'payoff'],   // 9  everything lights. The loudest hit.
+  [22.5, 'reply'],    // 10 the opening, answered
+  [24.0, 'end'],      //    the end card
+];
+const SCENE = {};   // filled by src/scenes.js
+const ERA_LIST = SHOT_LIST.map(([t0, sc], i) => [t0, i + 1 < SHOT_LIST.length ? SHOT_LIST[i + 1][0] : DURATION, () => SCENE[sc]()]);
+const SHOTS = SHOT_LIST.map(([t0, sc], i) => [sc + (i ? '-' + i : ''), i, t0, ERA_LIST[i][1], sc]);
+const CUE = {
+  ping: 0.5, night: 1.5, pile: [3.0, 3.5, 4.0], drift: 4.75, moved: 5.0, quiet: 6.0, hit: 7.0, shrink: 7.5,
+  plan: 8.0, learn: 8.5, built: 10.0, stations: [10.5, 11.5, 12.5, 13.5, 14.5], rush: 15.5, hold: 17.5,
+  payoff: 19.0, reply: 22.5, end: 24.0, rush: [15.5, 16.0, 16.5, 17.0],
+};
+const TIMELINE = {
+  width: W, height: H, fps: FPS, bpm: BPM, gridOffset: GRID0, duration: DURATION, frames: NFRAMES, loop: LOOP_T, safe: SAFE, aspect: FORMAT,
+  format: 'F4',
+  shots: SHOTS.map(([key, era, t0, t1, title], i) => ({ id: i + 1, key, era, t0, t1, title })),
+  cuts: SHOT_LIST.slice(1).map(([t0]) => t0),
+  morphs: [],
+  rush: [15.5, 16.0, 16.5, 17.0],
+  cues: CUE,
+  anchor: { t0: 15.5, t1: 17.5, x: MIDX, y: ROW.line - 58, tolerance: 40 },
+  acts: [
+    { name: '1 The night', role: 'build',   t0: 0.0,  t1: 6.5 },
+    { name: '2 The turn',  role: 'build',   t0: 6.5,  t1: 8.0 },
+    { name: '3 The plan',  role: 'build',   t0: 8.0,  t1: 10.0 },
+    { name: '4 The system', role: 'journey', t0: 10.0, t1: 15.5 },
+    { name: '5 The rush',  role: 'peak',    t0: 15.5, t1: 17.5 },
+    { name: '6 The hold',  role: 'silence', t0: 17.5, t1: 19.0 },
+    { name: '7 Payoff',    role: 'gift',    t0: 19.0, t1: 22.5 },
+    { name: '8 Answered',  role: 'goodbye', t0: 22.5, t1: 26.0 },
+  ],
+  board: [
+    { t: 1.2,  title: 'cold open', sound: 'one ping, room tone', next: 'cut on the beat: pull back' },
+    { t: 2.8,  title: 'the clock sweeps', sound: 'sparse pulse begins', next: 'cut wide' },
+    { t: 4.2,  title: 'messages pile up, threads knot', sound: 'kick on 1 and 3, muted bass', next: 'the bubble lifts away' },
+    { t: 5.6,  title: 'they moved on', sound: 'groove thins, cuts at 6.0', next: 'to black' },
+    { t: 7.4,  title: 'the mark, on one hit', sound: 'silence, then one hit', next: 'mark shrinks to a point' },
+    { t: 9.7,  title: 'first, we learn your business', sound: 'soft pad, ticking hat', next: 'the dashed path goes green' },
+    { t: 10.2, title: 'the bubble becomes node 1', sound: 'a rising whoosh into the drop', next: 'camera tracks the line' },
+    { t: 10.95, title: '01 lead capture', sound: 'full groove; a click', next: 'track to 02' },
+    { t: 11.95, title: '02 instant follow-up (0:02)', sound: 'a reply chime', next: 'track to 03' },
+    { t: 12.95, title: '03 booking', sound: 'a snap', next: 'track to 04' },
+    { t: 13.95, title: '04 CRM pipeline', sound: 'a slide', next: 'track to 05' },
+    { t: 14.95, title: '05 reminders & reviews', sound: 'two ticks', next: 'cut: the rush' },
+    { t: 15.6, title: 'rush 1 / 4', sound: 'a hit per beat, rising', next: 'cut on the beat' },
+    { t: 16.1, title: 'rush 2 / 4', sound: 'densest bar', next: 'cut on the beat' },
+    { t: 16.6, title: 'rush 3 / 4', sound: 'riser', next: 'cut on the beat' },
+    { t: 17.1, title: 'rush 4 / 4', sound: 'riser peaks, hard stop', next: 'cut to the wide hold' },
+    { t: 18.4, title: 'the hold: built, not running', sound: 'SILENCE', next: 'the hit' },
+    { t: 21.0, title: 'payoff: done your way', sound: 'LOUDEST: stab + sub, flat chord', next: 'cut to the opening framing' },
+    { t: 23.6, title: 'the opening, answered', sound: 'the chord rings', next: 'cut to the end card' },
+    { t: 25.6, title: 'end card', sound: 'chord decays, one soft ping', next: 'end' },
+  ],
+  narration: [],
+};
+window.TIMELINE = TIMELINE;
